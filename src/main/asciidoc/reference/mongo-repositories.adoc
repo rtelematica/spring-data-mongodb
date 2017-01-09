@@ -366,7 +366,9 @@ public interface PersonRepository extends MongoRepository<Person, String>
 }
 ----
 
-The placeholder ?0 lets you substitute the value from the method arguments into the JSON query string.
+The placeholder `?0` lets you substitute the value from the method arguments into the JSON query string.
+
+NOTE: `String` parameter values are escaped during the binding process, which means that it is not possible to add MongoDB specific operators via the argument.
 
 You can also use the filter property to restrict the set of properties that will be mapped into the Java object. For example,
 
@@ -382,8 +384,8 @@ public interface PersonRepository extends MongoRepository<Person, String>
 
 This will return only the firstname, lastname and Id properties of the Person objects. The age property, a java.lang.Integer, will not be set and its value will therefore be null.
 
-[[mongodb.repositories.queries.json.spel]]
-=== JSON based query queries with SpEL expressions
+[[mongodb.repositories.queries.json-spel]]
+=== JSON based queries with SpEL expressions
 
 Query strings and field definitions can be used together with SpEL expressions to create dynamic queries at runtime.
 SpEL expressions can provide predicate values and can be used to extend predicates with subdocuments.

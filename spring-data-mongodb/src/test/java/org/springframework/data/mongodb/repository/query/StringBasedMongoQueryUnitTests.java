@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -499,6 +500,19 @@ public class StringBasedMongoQueryUnitTests {
 		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("arg0", Pattern.compile("^calamity$"))));
 	}
 
+	/**
+	 * @see DATAMONGO-1575
+	 */
+	@Test
+	public void shouldReplaceParametersInInQuotedExpressionOfNestedQueryOperator() throws Exception {
+
+		StringBasedMongoQuery mongoQuery = createQueryForMethod("findByLastnameRegex", String.class);
+		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, "calamity");
+
+		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
+		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", Pattern.compile("^(calamity)"))));
+	}
+
 	private StringBasedMongoQuery createQueryForMethod(String name, Class<?>... parameters) throws Exception {
 
 		Method method = SampleRepository.class.getMethod(name, parameters);
@@ -518,6 +532,9 @@ public class StringBasedMongoQueryUnitTests {
 
 		@Query("{ 'lastname' : '?0' }")
 		Person findByLastnameQuoted(String lastname);
+
+		@Query("{ 'lastname' : { '$regex' : '^(?0)'} }")
+		Person findByLastnameRegex(String lastname);
 
 		@Query("{ 'address' : ?0 }")
 		Person findByAddress(Address address);
