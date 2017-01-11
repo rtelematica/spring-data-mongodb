@@ -17,6 +17,7 @@ package org.springframework.data.mongodb.repository.query;
 
 import lombok.EqualsAndHashCode;
 import lombok.Value;
+import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -198,8 +199,7 @@ class ExpressionEvaluatingParameterBinder {
 				return (String) value;
 			}
 
-			String serialized = JSON.serialize(value);
-			return serialized.substring(1, serialized.length() - 1);
+			return QuotedString.unquote(JSON.serialize(value));
 		}
 
 		if (value instanceof byte[]) {
@@ -257,31 +257,32 @@ class ExpressionEvaluatingParameterBinder {
 	 * Extract the placeholder stripping any trailing trailing quotation mark that might have resulted from the
 	 * {@link #createReplacementPattern(List) pattern} used.
 	 *
-	 * @param matcher The actual {@link Matcher#group() group}.
+	 * @param parameterIndex The actual parameter index.
+	 * @param matcher The actual {@link Matcher}.
 	 * @return
 	 */
 	private Placeholder extractPlaceholder(int parameterIndex, Matcher matcher) {
 
 		if (matcher.groupCount() > 1) {
 
-			String suffix = matcher.group(parameterIndex * 2 + 2);
 			String rawPlaceholder = matcher.group(parameterIndex * 2 + 1);
+			String suffix = matcher.group(parameterIndex * 2 + 2);
 
 			if (!StringUtils.hasText(rawPlaceholder)) {
 
 				rawPlaceholder = matcher.group();
-				suffix = ""+rawPlaceholder.charAt(rawPlaceholder.length()-1);
-				if(rawPlaceholder.endsWith("'")) {
-					rawPlaceholder = rawPlaceholder.substring(0, rawPlaceholder.length()-1);
+				suffix = "" + rawPlaceholder.charAt(rawPlaceholder.length() - 1);
+				if (QuotedString.endsWithQuote(rawPlaceholder)) {
+					rawPlaceholder = QuotedString.unquoteSuffix(rawPlaceholder);
 				}
 			}
 
 			if (StringUtils.hasText(suffix)) {
 
-				boolean quoted= (suffix.endsWith("'") || suffix.endsWith("\""));
+				boolean quoted = QuotedString.endsWithQuote(suffix);
 
 				return Placeholder.of(parameterIndex, rawPlaceholder, quoted,
-						quoted ? suffix.substring(0, suffix.length() - 1) : suffix);
+						quoted ? QuotedString.unquoteSuffix(suffix) : suffix);
 			}
 		}
 
@@ -390,5 +391,42 @@ class ExpressionEvaluatingParameterBinder {
 					: parameter + (suffix != null ? suffix : "");
 		}
 
+	}
+
+	/**
+	 * Utility to handle quoted strings using single/double quotes.
+	 *
+	 * @author Mark Paluch
+	 */
+	@UtilityClass
+	static class QuotedString {
+
+		/**
+		 * @param string
+		 * @return {@literal true} if {@literal string} ends with a single/double quote.
+		 */
+		static boolean endsWithQuote(String string) {
+			return string.endsWith("'") || string.endsWith("\"");
+		}
+
+		/**
+		 * Remove trailing quoting from {@literal quoted}.
+		 *
+		 * @param quoted
+		 * @return {@literal quoted} with removed quotes.
+		 */
+		public static String unquoteSuffix(String quoted) {
+			return quoted.substring(0, quoted.length() - 1);
+		}
+
+		/**
+		 * Remove leading and trailing quoting from {@literal quoted}.
+		 *
+		 * @param quoted
+		 * @return {@literal quoted} with removed quotes.
+		 */
+		public static String unquote(String quoted) {
+			return quoted.substring(1, quoted.length() - 1);
+		}
 	}
 }
