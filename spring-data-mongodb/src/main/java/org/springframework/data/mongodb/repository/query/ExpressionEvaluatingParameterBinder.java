@@ -271,7 +271,7 @@ class ExpressionEvaluatingParameterBinder {
 			if (!StringUtils.hasText(rawPlaceholder)) {
 
 				rawPlaceholder = matcher.group();
-				suffix = "" + rawPlaceholder.charAt(rawPlaceholder.length() - 1);
+				suffix = rawPlaceholder.matches(".*\\d$") ? "" :  "" + rawPlaceholder.charAt(rawPlaceholder.length() - 1);
 				if (QuotedString.endsWithQuote(rawPlaceholder)) {
 					rawPlaceholder = QuotedString.unquoteSuffix(rawPlaceholder);
 				}

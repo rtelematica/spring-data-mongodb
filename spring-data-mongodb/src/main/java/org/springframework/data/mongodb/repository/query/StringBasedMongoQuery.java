@@ -32,9 +32,11 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import com.mongodb.util.JSON;
+import com.mongodb.util.JSONCallback;
 
 /**
  * Query to use a plain JSON String to create the {@link Query} to actually execute.
@@ -227,7 +229,8 @@ public class StringBasedMongoQuery extends AbstractMongoQuery {
 			String transformedInput = transformQueryAndCollectExpressionParametersIntoBindings(input, bindings);
 			String parseableInput = makeParameterReferencesParseable(transformedInput);
 
-			collectParameterReferencesIntoBindings(bindings, JSON.parse(parseableInput));
+			collectParameterReferencesIntoBindings(bindings,
+					JSON.parse(parseableInput, new ParsingErrorIgnoringJsonCallback()));
 
 			return transformedInput;
 		}
@@ -401,6 +404,25 @@ public class StringBasedMongoQuery extends AbstractMongoQuery {
 
 		public boolean isExpression() {
 			return this.expression != null;
+		}
+	}
+
+	private static class ParsingErrorIgnoringJsonCallback extends JSONCallback {
+
+		@Override
+		public Object objectDone() {
+
+			try {
+				return super.objectDone();
+			} catch (Exception e) {
+				if (LOG.isDebugEnabled()) {
+					LOG.debug(
+							"JSON parsing error for potential bound parameter. Ignored for now and deferred after binding at execution time. ",
+							e);
+				}
+			}
+
+			return new BasicDBObject();
 		}
 	}
 }

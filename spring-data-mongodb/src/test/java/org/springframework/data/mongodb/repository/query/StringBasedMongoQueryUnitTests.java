@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 import javax.xml.bind.DatatypeConverter;
 
 import org.bson.BSON;
+import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -437,6 +438,39 @@ public class StringBasedMongoQueryUnitTests {
 		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("lastname", Pattern.compile("^(calamity)"))));
 	}
 
+	@Test // DATAMONGO-1593
+	public void shouldRenderObjectIdParameterCorrectly() throws Exception {
+
+		ObjectId id = new ObjectId();
+
+		StringBasedMongoQuery mongoQuery = createQueryForMethod("singeObjectIdArgInQueryString", String.class);
+		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, id.toString());
+
+		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
+		assertThat(query.getQueryObject(), is((DBObject) new BasicDBObject("arg0", id)));
+	}
+
+	@Test // DATAMONGO-1593
+	public void shouldRenderMultipleObjectIdParametersCorrectly() throws Exception {
+
+		ObjectId id = new ObjectId();
+		ObjectId readUsersId = new ObjectId();
+
+		StringBasedMongoQuery mongoQuery = createQueryForMethod("multipleObjectIdArgsInQueryString", String.class,
+				String.class);
+
+		ConvertingParameterAccessor accessor = StubParameterAccessor.getAccessor(converter, id.toString(),
+				readUsersId.toString());
+
+		org.springframework.data.mongodb.core.query.Query query = mongoQuery.createQuery(accessor);
+		assertThat(query.getQueryObject().get("arg0"), is((Object) id));
+		assertThat(query.getQueryObject().get("$or"), instanceOf(BasicDBList.class));
+		assertThat(DBObjectTestUtils.getAsDBList(query.getQueryObject(), "$or").get(0),
+				is((Object) new BasicDBObject("arg1.value0", readUsersId)));
+		assertThat(DBObjectTestUtils.getAsDBList(query.getQueryObject(), "$or").get(1),
+				is((Object) new BasicDBObject("arg1.value1", readUsersId)));
+	}
+
 	private StringBasedMongoQuery createQueryForMethod(String name, Class<?>... parameters) throws Exception {
 
 		Method method = SampleRepository.class.getMethod(name, parameters);
@@ -510,5 +544,12 @@ public class StringBasedMongoQueryUnitTests {
 
 		@Query("{ 'arg0' : ?0 }")
 		List<Person> findByWithBsonArgument(DBObject arg0);
+
+		@Query("{ 'arg0' : { \"$oid\" : ?0} }")
+		List<Person> singeObjectIdArgInQueryString(String arg0);
+
+		@Query("{ 'arg0' :   { \"$oid\" : ?0}  , '$or' : [ { 'arg1.value0' :  { \"$oid\" : ?1 } }, { 'arg1.value1' :  { \"$oid\" : ?1 } } ]  }")
+		List<Person> multipleObjectIdArgsInQueryString(String arg0, String arg1);
 	}
+
 }
