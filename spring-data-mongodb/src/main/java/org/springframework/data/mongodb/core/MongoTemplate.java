@@ -1000,8 +1000,8 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware, 
 			assertUpdateableIdIfNotSet(objectToSave);
 
 			// Create query for entity with the id and old version
-			Object id = convertingAccessor.getProperty(idProperty);
-			Query query = Query.query(Criteria.where(idProperty.getName()).is(id).and(property.getName()).is(number));
+			Optional<Object> id = convertingAccessor.getProperty(idProperty);
+			Query query = Query.query(Criteria.where(idProperty.getName()).is(id.get()).and(property.getName()).is(number));
 
 			// Bump version number
 			convertingAccessor.setProperty(property, Optional.of(number.longValue() + 1));
@@ -1183,7 +1183,7 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware, 
 			public UpdateResult doInCollection(MongoCollection<Document> collection)
 					throws MongoException, DataAccessException {
 
-				Optional<? extends MongoPersistentEntity<?>> entity = entityClass == null ? null
+				Optional<? extends MongoPersistentEntity<?>> entity = entityClass == null ? Optional.empty()
 						: getPersistentEntity(entityClass);
 
 				increaseVersionForUpdateIfNecessary(entity, update);
@@ -1914,7 +1914,9 @@ public class MongoTemplate implements MongoOperations, ApplicationContextAware, 
 			PersistentPropertyAccessor accessor = entity.getPropertyAccessor(savedObject);
 
 			Optional<Object> value = accessor.getProperty(idProp);
-			value.ifPresent(it -> new ConvertingPropertyAccessor(accessor, conversionService).setProperty(idProp, value));
+			if(!value.isPresent()) {
+				new ConvertingPropertyAccessor(accessor, conversionService).setProperty(idProp, Optional.of(id));
+			}
 		});
 	}
 

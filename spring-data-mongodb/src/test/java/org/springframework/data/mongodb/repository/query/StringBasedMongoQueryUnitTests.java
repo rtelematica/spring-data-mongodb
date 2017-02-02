@@ -75,8 +75,6 @@ public class StringBasedMongoQueryUnitTests {
 	@Before
 	public void setUp() {
 
-		when(operations.getConverter()).thenReturn(converter);
-
 		this.converter = new MappingMongoConverter(factory, new MongoMappingContext());
 	}
 
