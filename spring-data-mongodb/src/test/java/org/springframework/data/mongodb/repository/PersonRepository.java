@@ -35,10 +35,11 @@ import org.springframework.data.geo.Polygon;
 import org.springframework.data.mongodb.repository.Person.Sex;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.Nullable;
 
 /**
  * Sample repository managing {@link Person} entities.
- * 
+ *
  * @author Oliver Gierke
  * @author Thomas Darimont
  * @author Christoph Strobl
@@ -49,7 +50,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with the given lastname.
-	 * 
+	 *
 	 * @param lastname
 	 * @return
 	 */
@@ -61,7 +62,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with the given lastname ordered by their firstname.
-	 * 
+	 *
 	 * @param lastname
 	 * @return
 	 */
@@ -70,7 +71,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 	/**
 	 * Returns the {@link Person}s with the given firstname. Uses {@link Query} annotation to define the query to be
 	 * executed.
-	 * 
+	 *
 	 * @param firstname
 	 * @return
 	 */
@@ -83,11 +84,11 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with a firstname matching the given one (*-wildcard supported).
-	 * 
+	 *
 	 * @param firstname
 	 * @return
 	 */
-	List<Person> findByFirstnameLike(String firstname);
+	List<Person> findByFirstnameLike(@Nullable String firstname);
 
 	List<Person> findByFirstnameNotContains(String firstname);
 
@@ -110,7 +111,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns a page of {@link Person}s with a lastname mathing the given one (*-wildcards supported).
-	 * 
+	 *
 	 * @param lastname
 	 * @param pageable
 	 * @return
@@ -122,7 +123,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with a firstname contained in the given varargs.
-	 * 
+	 *
 	 * @param firstnames
 	 * @return
 	 */
@@ -130,7 +131,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with a firstname not contained in the given collection.
-	 * 
+	 *
 	 * @param firstnames
 	 * @return
 	 */
@@ -140,7 +141,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with an age between the two given values.
-	 * 
+	 *
 	 * @param from
 	 * @param to
 	 * @return
@@ -149,7 +150,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns the {@link Person} with the given {@link Address} as shipping address.
-	 * 
+	 *
 	 * @param address
 	 * @return
 	 */
@@ -157,7 +158,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 
 	/**
 	 * Returns all {@link Person}s with the given {@link Address}.
-	 * 
+	 *
 	 * @param address
 	 * @return
 	 */
@@ -232,7 +233,7 @@ public interface PersonRepository extends MongoRepository<Person, String>, Query
 	boolean someExistQuery(String lastname);
 
 	// DATAMONGO-770
-	List<Person> findByFirstnameIgnoreCase(String firstName);
+	List<Person> findByFirstnameIgnoreCase(@Nullable String firstName);
 
 	// DATAMONGO-770
 	List<Person> findByFirstnameNotIgnoreCase(String firstName);
